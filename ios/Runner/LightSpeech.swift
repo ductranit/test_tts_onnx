@@ -10,7 +10,7 @@ import onnxruntime_objc
 
 struct LightSpeechOutputs {
     let mels: [[[Float]]]
-    let durations: [[Int]]
+    let durations: [[Int32]]
 }
 
 class LightSpeech {
@@ -19,8 +19,8 @@ class LightSpeech {
         var result: LightSpeechOutputs
         
         // raw input vectors
-        let inputIDs = [25, 29, 13, 40, 17, 51, 23, 29, 17, 12, 42, 16, 51, 14, 8, 51, 23, 3, 50, 4, 71, 68, 14, 29, 22, 50, 34, 29, 21, 25, 29, 4, 42, 21, 9, 29, 17, 17, 16, 51, 34, 33, 18, 17, 18, 47, 11, 33, 26, 8, 51, 13, 51, 14, 25, 29, 14, 39, 18, 72]
-        let speakerIDs = [0]
+        let inputIDs: [Int32] = [25, 29, 13, 40, 17, 51, 23, 29, 17, 12, 42, 16, 51, 14, 8, 51, 23, 3, 50, 4, 71, 68, 14, 29, 22, 50, 34, 29, 21, 25, 29, 4, 42, 21, 9, 29, 17, 17, 16, 51, 34, 33, 18, 17, 18, 47, 11, 33, 26, 8, 51, 13, 51, 14, 25, 29, 14, 39, 18, 72]
+        let speakerIDs: [Int32] = [0]
         let speedRatios: [Float] = [1.0]
         let f0Ratios: [Float] = [1.0]
         let energyRatios: [Float] = [1.0]
@@ -35,8 +35,8 @@ class LightSpeech {
         let inputNames = ["input_ids", "speaker_ids", "speed_ratios", "f0_ratios", "energy_ratios"]
 
         // create input tensors from raw vectors
-        let inputIDsTensor = try! ORTValue(tensorData: NSMutableData(bytes: inputIDs, length: inputIDs.count * MemoryLayout<Int>.size), elementType: ORTTensorElementDataType.int32, shape: inputIDsShape)
-        let speakerIDsTensor = try! ORTValue(tensorData: NSMutableData(bytes: speakerIDs, length: speakerIDs.count * MemoryLayout<Int>.size), elementType: ORTTensorElementDataType.int32, shape: speakerIDsShape)
+        let inputIDsTensor = try! ORTValue(tensorData: NSMutableData(bytes: inputIDs, length: inputIDs.count * MemoryLayout<Int32>.size), elementType: ORTTensorElementDataType.int32, shape: inputIDsShape)
+        let speakerIDsTensor = try! ORTValue(tensorData: NSMutableData(bytes: speakerIDs, length: speakerIDs.count * MemoryLayout<Int32>.size), elementType: ORTTensorElementDataType.int32, shape: speakerIDsShape)
         let speedRatiosTensor = try! ORTValue(tensorData: NSMutableData(bytes: speedRatios, length: speedRatios.count * MemoryLayout<Float>.size), elementType: ORTTensorElementDataType.float, shape: speedRatiosShape)
         let f0RatiosTensor = try! ORTValue(tensorData: NSMutableData(bytes: f0Ratios, length: f0Ratios.count * MemoryLayout<Float>.size), elementType: ORTTensorElementDataType.float, shape: f0RatiosShape)
         let energyRatiosTensor = try! ORTValue(tensorData: NSMutableData(bytes: energyRatios, length: energyRatios.count * MemoryLayout<Float>.size), elementType: ORTTensorElementDataType.float, shape: energyRatiosShape)
@@ -69,11 +69,11 @@ class LightSpeech {
             }
         }
 
-        // Convert durations NSMutableData to [[Int]]
-        let durationsPointer = durations.bytes.assumingMemoryBound(to: Int.self)
+        // Convert durations NSMutableData to [[Int32]]
+        let durationsPointer = durations.bytes.assumingMemoryBound(to: Int32.self)
         let durationsDims = durationShapeInfo!.shape.map{ Int(truncating: $0) }
 
-        var durationsArray: [[Int]] = Array(repeating: Array(repeating: 0, count: durationsDims[1]), count: durationsDims[0])
+        var durationsArray: [[Int32]] = Array(repeating: Array(repeating: 0, count: durationsDims[1]), count: durationsDims[0])
 
         for i in 0..<durationsDims[0] {
             for j in 0..<durationsDims[1] {
