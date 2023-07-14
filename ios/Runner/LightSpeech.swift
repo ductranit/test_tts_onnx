@@ -53,12 +53,36 @@ class LightSpeech {
         let mels = try! output["Identity"]!.tensorData()
         let durations = try! output["Identity_1"]!.tensorData()
         let durationShapeInfo = try! output["Identity_1"]?.tensorTypeAndShapeInfo()
+        let melsShapeInfo = try! output["Identity"]?.tensorTypeAndShapeInfo()
         
-        let melsArr: [[[Float]]] = Array(_immutableCocoaArray: mels)
-        let durationsArr: [[Int]] = Array(_immutableCocoaArray: durations)
+        // Convert mels NSMutableData to [[[Float]]]
+        let melsPointer = mels.bytes.assumingMemoryBound(to: Float.self)
+        let melsDims = melsShapeInfo!.shape.map{ Int(truncating: $0) }
+
+        var melsArray: [[[Float]]] = Array(repeating: Array(repeating: Array(repeating: 0.0, count: melsDims[2]), count: melsDims[1]), count: melsDims[0])
+
+        for i in 0..<melsDims[0] {
+            for j in 0..<melsDims[1] {
+                for k in 0..<melsDims[2] {
+                    melsArray[i][j][k] = melsPointer[i*melsDims[1]*melsDims[2] + j*melsDims[2] + k]
+                }
+            }
+        }
+
+        // Convert durations NSMutableData to [[Int]]
+        let durationsPointer = durations.bytes.assumingMemoryBound(to: Int.self)
+        let durationsDims = durationShapeInfo!.shape.map{ Int(truncating: $0) }
+
+        var durationsArray: [[Int]] = Array(repeating: Array(repeating: 0, count: durationsDims[1]), count: durationsDims[0])
+
+        for i in 0..<durationsDims[0] {
+            for j in 0..<durationsDims[1] {
+                durationsArray[i][j] = durationsPointer[i*durationsDims[1] + j]
+            }
+        }
         
         // convert to array
-        result = LightSpeechOutputs(mels: melsArr, durations: durationsArr)
+        result = LightSpeechOutputs(mels: melsArray, durations: durationsArray)
 
         return result
     }

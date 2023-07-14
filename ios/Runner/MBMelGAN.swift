@@ -37,9 +37,25 @@ class MBMelGAN {
         // create input name -> input tensor map
         let inputTensors: [String: ORTValue] = ["mels": melTensor]
 
-        let output = try! ortSession.run(withInputs: inputTensors, outputNames: [], runOptions: nil)
-        let audio = output["0"]!.tensorData as! [[[Float]]]
-        result = MBMelGANOutputs(audio: audio)
+        let output = try! ortSession.run(withInputs: inputTensors, outputNames: ["Identity"], runOptions: nil)
+        let audio = try! output["Identity"]!.tensorData()
+        let audioShapeInfo = try! output["Identity"]?.tensorTypeAndShapeInfo()
+        
+        // Convert audio NSMutableData to [[[Float]]]
+        let audioPointer = audio.bytes.assumingMemoryBound(to: Float.self)
+        let audioDims = audioShapeInfo!.shape.map{ Int(truncating: $0) }
+
+        var audioArray: [[[Float]]] = Array(repeating: Array(repeating: Array(repeating: 0.0, count: audioDims[2]), count: audioDims[1]), count: audioDims[0])
+
+        for i in 0..<audioDims[0] {
+            for j in 0..<audioDims[1] {
+                for k in 0..<audioDims[2] {
+                    audioArray[i][j][k] = audioPointer[i*audioDims[1]*audioDims[2] + j*audioDims[2] + k]
+                }
+            }
+        }
+        
+        result = MBMelGANOutputs(audio: audioArray)
 
         return result
     }

@@ -45,15 +45,8 @@ class SpeechController: NSObject, FlutterStreamHandler, FlutterPlugin {
         let mbmelgan = MBMelGAN()
         let lightspeechResults = lightspeech.infer(ortEnv: ortEnv, ortSession: lightspeechSession)
         let durations = lightspeechResults.durations[0]
-        // infer melgan
-            let mels = lightspeechResults.mels
-            let mbmelganResults = mbmelgan.infer(ortEnv: ortEnv, ortSession: mbmelganSession, mels: mels)
-            
-            var durationString = ""
-            for i in durations {
-                durationString += "\(i) "
-            }
-        
+        let mels = lightspeechResults.mels
+        let mbmelganResults = mbmelgan.infer(ortEnv: ortEnv, ortSession: mbmelganSession, mels: mels)
         let audio = mbmelganResults.audio[0].flatMap { $0 }.map { Float($0) }
         let data = audio.withUnsafeBufferPointer { Data(buffer: $0) }
         playAudio(data: data)
